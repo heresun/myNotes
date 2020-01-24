@@ -40,4 +40,19 @@ linux
 >
 > `git commit -m "说明"`
 >
-> 在提交之前可以使用 `git diff`查看文件的修改情况
+> 在提交之前可以使用 `git diff`查看文件的修改情况  
+
+## 版本回退
+
+> `git log` 查询提交的历史记录，其结果为从按时间从近到远显示，结果如下：
+>
+> ![image-20200124141306683](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200124141306683.png)
+>
+> 可以加上`--pretty=oneline`参数，使得结果在一行
+>
+> ![image-20200124141529030](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200124141529030.png)
+>
+> > 图中一串十六进制的数字是 commit id，标志每一次提交
+>
+> 
+
