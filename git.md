@@ -121,5 +121,11 @@ git之所以更优秀是因为它跟踪的是**修改**而不是**文件**
 >
 >    + 误删，且需要恢复
 >
->      `git checkout -- test.txt`撤销工作区的修改
+>      + 还未`add`：`git checkout -- test.txt`撤销工作区的修改
+>
+>      + 已经`add`：
+>
+>        `git reset HEAD test.txt` 
+>
+>        `git checkout -- test.txt`
 
