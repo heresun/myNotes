@@ -144,3 +144,19 @@ Git是分布式版本控制系统，同一个Git仓库，可以分布到不同�
    ​	id_rsa.pub：公钥
 
 2. 登录GitHub，打开“settings”, "SSH and GPG keys"页面
+
+### 添加远程仓库
+
+1. 将远程仓库和本地仓库关联
+
+   + `git remote add origin git@github.com:heresun/myNotes.git`
+
+   + 把本地内容推送到远程库
+
+     `git push -u origin master`
+
+     > `git push`实际上是把当前分支master推送到远程，由于远程仓库是空的，第一次推送master时加上了`-u`参数，这样git不但把本地的master分支内容推送到远程master分支，还会把二者关联起来，在以后的`push`和`pull`时就可以简化命令
+
+   + 自此以后就可以用如下命令master内容到远程仓库
+
+     `git push origin master`
