@@ -599,3 +599,525 @@ public class Test{
 Java的反射是指运行期拿到一个对象的所有信息
 
 反射是为了解决在运行期，对某个实例一无所知的情况下，如何调用其方法。
+
+## 什么是反射？
+
+Java的反射不得不提到`Class`类，这个类的实例是jvm内部创建的，它的构造方法是私有的，也就是说只有JVM能够创建`Class`类的实例，用户是无法创建的。JVM持有的每个`Class`实例都指向一个数据类型，每个`Class`实例都包含了该类型的完整信息：类名、包名、父类、实现的接口、域、方法
+
+由于JVM为每个加载的类型创建了对应的`Class`实例，并且在该实例中保存了该类型的所有信息，因此，如果获取了某个`Class`实例，就可以通过这个实例获取该实例对应类型的所有信息，这种通过`Class`实例获取类型信息的方法称为**反射**
+
+jvm总是动态加载类，即用到的时候再加载，这样可以在运行期根据条件来控制加载哪些class
+
+## 如何获取`Class`实例？
+
+**方法一**：通过类获取
+
+`Class cls = Person.class`
+
+**方法二**：通过实例获取
+
+`Class cls = person.getClass()`
+
+**方法三**：已知完整类名，通过静态方法获取
+
+`Class cls = Class.forName("com.heresun.Person")`
+
+**因为每个类型的`Class`对象都是唯一的，因此通过不同方法获取的同一个类的`Class`对象是同一个**
+
+## 通过`Class`实例创建对象
+
+```java
+Class cls = Person.class;
+Person person = cls.newInstance();
+//通过以上方法创建的实例的局限是：只能调用public的无参构造方法
+
+class Person{
+    private String name;
+    public void setName(String name){
+        this.name = name;
+    }
+    public String getName(){
+        return this.name;
+    }
+}
+```
+
+## 访问域
+
++ Field getField(String name)：通过域名访问public域，包括父类的
++ Field getDeclaredField(String name)：根据域名访问当前类的域,不含父类
++ Field[] getFields(): 获取所有public域，包括父类的
++ Field[] getDeclaredFields()：获取当前类所有域，不包括父类
+
+拿到域的对象后还可以操作域的值：
+
+```java
+Person p = new Person("sundehui");
+Class cls = p.getClass();
+Field name = cls.getDeclaredField("name");
+name.setAccessible(true);//如果name用private修饰，这条代码将其设置为public
+
+//获取值
+String name = (String)name.get(p);//name为sundehui
+//修改值
+name.set(p,"heresun");
+```
+
+> `name.setAccessible(true)`可能失败，因为如果JVM运行期存在`SecurityManager`,那么它会根据规则检查，有可能阻止该条代码，如不允许对`java`和`javax`开头的包的类调用`setAccessible(true)`，这样可以保证JVM核心库的安全。
+
+## 访问方法
+
++ Method getMethod(name, Class...)：获取public的方法，包含父类
++ Method getDeclaredMethod(name, Class...); 获取当前类的方法，不含父类
++ Methods getMethods(): 获取所有public的方法，含父类
++ Methods getDeclaredMethods(); 获取当前类的所有方法，不含父类
+
+操作方法
+
+```java
+String s = "sundehui";
+Class cls = s.getClass();
+Method method = cls.getMethod("substring",int.class);
+method.setAccessible(true);//如果该方法为私有的，此代码可以赋予其调用权限
+method.invoke(s,6);//第一个参数为调用该方法的实例，第二个参数为该方法的参数，如果该方法为静态方法，第一个参数永远为null
+```
+
+> 反射下仍然遵循多态原则：即总是调用实际类型的覆写方法
+
+## 调用构造方法
+
+虽然可以通过`Person.class.newInstance()`构造实例，但是它的局限性为只能调用无参公开的构造方法
+
+为了调用任意的构造方法，java的反射API提供了`Constructor`对象，它包含一个构造方法的所有信息，
+
++ getConstructor(Class...), 获取某个public的构造方法
+
++ getDeclaredConstructor(Class...):获取某个构造方法
+
++ getConstructors()：获取所有public的构造方法
+
++ getDeclaredContructors():获取所有构造方法
+
+  > <font style="color:red">注意:`Constructor`总是当前类的构造方法，与父类无关，所以不存在多态问题，调用非`public`的构造方法时，必须`setAccessible(true)`设置允许访问，但是可能失败</font>
+  >
+  > `Constructor`的使用于`Method`几乎一样，只是在调用的形式和返会的结果不一样,如下
+
+```java
+        Constructor<Person> cons =Person
+            	.class
+                .getConstructor(String.class);
+        Person person = constructor.newInstance("sdfg");
+
+
+class Person{
+    private String name;
+
+    public Person(String name){
+        this.name = name;
+    }
+    
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+```
+
+## 获取继承关系
+
+### 获取父类的Class对象
+
+```java
+Class stdCls = Student.class;
+Class perCls = stdCls.getSuperClass();
+```
+
+### 通过Class对象判断向上转型是否成立
+
+```java
+Integer.class.isAssignableFrom(Integer.class)// true
+Number.class.isAssignableFrom(Integer.class) //true
+    
+Integer.class.isAssignableFrom(Number.class) //false
+```
+
+## 动态代理
+
+通过动态代理可以在运行期动态创建某个`interface`的实例
+
+待完善。。。。
+
+
+
+# 注解
+
+注解时放在Java源码的类、方法、字段、参数前的一种特殊"注释"
+
+与注释不同的是，注释会被编译器忽略，注解则可以被编译器打包进class文件，因此，注解是一种用作标注的”元数据“
+
+从JVM的角度看，注解本身对代码逻辑没有任何影响，如何使用注解完全有工具决定
+
+## 注解分类
+
+**编译用的注解**
+
+这类注解不会被编译进class文件，编译后被编译器扔掉
+
+**框架注解**
+
+一些工具在加载class文件时会对class做动态修改，实现一些特殊功能，这类注解会被编译进class文件，加载结束后并不会存在于内存中，这类注解只被一些底层库使用
+
+**其他注解**
+
+这类注解时程序运行期能够读取的注解，被加载后一直存在于JVM中
+
+
+
+## 作用分类
+
++ 编写文档  (不可操作):通过代码里的注解生成文档
++ 代码分析：使用反射根据注解进行代码分析
++ 编译检查（不可操作）：编译检查
+
+#### JDK中预定义的注解
+
++ `@Override`: 检查某个方法是否正确覆写
++ `@SuppressWarning`：告诉编译器忽略此处代码产生的警告
++ `@Deprecated`：过时
+
+## 注解的定义
+
+### 元注解
+
+可以注解其他的注解，一般使用元注解而不需要自己定义
+
+1. `@Target`：它用于定义注解能够应用于源码的哪些位置
+
+   + @Target(ElementType.Type): 类或接口
+
+   + @Target(ElementType.FIELD):域
+
+   + @Target(ElementType.METHOD)：方法
+
+   + @Target(ElementType.CONSTRUCTOR)：构造方法
+
+   + @Target(ElementType.PARAMETER):方法参数
+
+2. `@Retention`：注解定义了注解的生命周期，如果不存在，默认为CLASS
+
+   + @Retention.SOURCE: 仅保留到源代码中，编译时使用
+
+   + @Retention.CLASS: 保存到class文件中，但不会被JVM读取到
+
+   + @Retention.RUNTIME: 保存到class文件中，而且会被JVM读取到，自定义的注解一般选这个
+
+3. `@Repeatable`：定义注解是否可以重复
+
+4. `@Inherited`：定义子类是否可以继承父类的注解，仅针对`@Target(ElementType.TYPE)`类型的注解有效，并且仅对类的继承，对接口的继承无效
+5. `@Documented`：描述注解时候被抽取到api文档中
+
+### 自定义注解
+
+#### 自定义注解
+
+配置参数，配置参数的类型如下
+
++ 所有基本类型
++ String
++ 枚举
++ 注解
++ 以上类型的数组
+
+**配置参数必须常量**，以上的限制保证了这一特性，配置参数可以有默认值
+
+大部分注解都会有一个名为 value 的配置参数，对此参数赋值可以只写常量
+
+```java
+@Target(ElementType.TYPE)//必须指定注解的应用范围
+@Retention(RetentionPolicy.RUNTIME)//应当设置该注解的生命周期
+public @interface Report{
+    int type() default 0;
+    String level() default "info";
+    String value() default "";
+}
+```
+
++ **注解的本质：是一个继承了java.lang.annotation.Annotation接口的接口**
+
+### 注解的使用
+
+自定的注解不会对代码的逻辑造成任何影响，**注解要配合着反射使用，**自定义的注解需要额外的代码进行检查并实现相应的规则
+
+# 泛型
+
+## 什么是泛型？
+
+泛型就是定义一种模板，实现了编写一次万能匹配，并且通过编译器保证了类型安全，泛型一般用于容器类中。
+
+## 泛型的好处
+
++ 类型安全
++ 消除了强制类型转换
+
+## 静态方法的泛型
+
+```java
+public class Pair<T> {//T称为泛型标识--类型形参
+    private T first;
+    private T last;
+    public Pair(T first, T last) {
+        this.first = first;
+        this.last = last;
+    }
+    public T getFirst() { ... }
+    public T getLast() { ... }
+
+    // 对静态方法使用<T>，这样编译错误
+    public static Pair<T> create(T first, T last) {
+        return new Pair<T>(first, last);
+    }
+    
+    // 编译通过，但是此时<T>于实例中的T已经无关了
+    public static<T> Pair<T> create(T first, T last) {
+        return new Pair<T>(first, last);
+    }
+    
+    // 将T该为K，将静态方法的泛型和实例方法的泛型分开，实例泛型方法仅仅把static去掉就可以了
+    public static<K> Pair<K> create(K first, K last) {
+        return new Pair<K>(first, last);
+    }
+}
+
+```
+
+## 类型擦拭
+
+**Java语言的泛型实现方式是擦拭法**
+
+所谓擦拭法：虚拟机对泛型一无所知，所有的工作都是编译器做的，即泛型是一种语法糖，应用于编译期
+
+Java的泛型是由编译器在编译时实行的，编译器内部永远把所有类型`T`视为`Object`处理，但是，在需要转型的时候，编译器会根据`T`的类型自动为我们实行安全地强制转型。
+
+### 关于泛型接口实现类的类型擦除
+
+<font style="color:red">通过桥接方法保证类与接口之间的实现关系</font>>
+
+## 类型通配符
+
+使用`?`代替具体的类型实参，**所以类型通配符是类型实参而不是类型形参**
+
+### 类型通配符的上限
+
+`<? extends 实参类型>`,`?`代表实参类型及其子类型，在该情况下，不能调用setter方法
+
+### 类型通配符的下限
+
+`<? super 实参类型>`，`?`代表实参类型及其超类，在该情况下，不能调用getter方法
+
+## 泛型的数组创建
+
++ 可以声明泛型的数组引用，不可以直接创建带泛型的数组对象
+
+  ```java
+  //这样是错误的
+  ArrayList<String> strList = new ArrayList<String>[10];
+  //这样是正确的
+  ArrayList<String> strList = new ArrayList[10];
+  ```
+
+  
+
++ 通过java.lang.reflection包下的Array类创建数组
+
+  ```java
+  ArrayList<String>[] strList =
+      (ArrayList<String>[])Array.newInstance(ArrayList.class,10);
+  
+  //或者
+  public class Fruit<T>{
+      private T box;//泛型形参不能通过new直接创建对象
+      
+      public Fruit(Class<T> clz, int length){
+   		T[] t = (T[])Array.newInstance(clz,length);       
+      }
+  }
+  ```
+
+  
+
+## 泛型的局限
+
+1. 泛型不能是基本类型
+
+2. 无法取得带泛型的`Class`
+
+   > 因为在编译器看来，`T`就是`Object`，对`ArrayList<String>`和`ArrayList<Integer>`类型获取`Class`时，获取到的是同一个`Class`，也就是`ArrayList`类的`Class`，也就是说，无论是`T`的类型是什么，`getClass()`返回的是同一个`Class`实例，以为他们编译后都是`ArrayList<Object>`
+
+3. 无法判断带泛型类的类型，即`x instanceof Pair<String>`
+
+   > 原因同上
+
+4. 不能实例化`T`类型
+
+   > 如
+   >
+   > ```java
+   > public class Pair<T> {
+   >     private T first;
+   >     private T last;
+   >     public Pair() {
+   >         // 编译错误:
+   >         first = new T();
+   >         last = new T();
+   >         //上述两行代码类型擦除后变为
+   >         fitst = new Object();
+   >         last = new Object();
+   >         //这样一来`new Pair<String>()`和`new Pair<Integer>()`就全部变成了`Object`,显然编译器要阻止这种类型不对的代码
+   >     }
+   >     //要实例化`T`类型，必须借助额外的`Class<T>`参数,即通过反射来实例化`T`类型
+   >     public Pair(Class<T> cls){
+   >         first = cls.newInstance();
+   >         last = cls.newInstance();
+   >     }   
+   > }
+   > ```
+
+
+
+# 集合类
+
+## HashMap
+
+待续。。。
+
+# 多线程
+
+多线程的特点在于：经常需要读写共享数据，并且需要同步
+
+java多线程编程的特点在于：
+
++ 多线程模型是java程序最基本的并发模型
++ 读写网络、数据库、Web开发等都依赖Java多线程模型
+
+## 创建线程
+
++ 方法一:从Thread类派生一个自定义类，覆写`run()`方法
+
+  ```java
+  main(){
+      Thread t = new MyThread();
+      t.start();
+  }
+  
+  public MyThread extends Thread{
+      @Override
+      public void run(){
+          //todo
+      }
+  }
+  ```
+
++ 方法二：创建Thread实例时,传入一个`Runnable`实例
+
+  ```java
+  main(){
+      Thread t = new Thread(new Runnble(){
+          @Override
+          public void run(){
+              //todo
+          }
+      });
+      //lambda表达式写法
+      Thread t = new Thread(()->{
+         //todo 
+      });
+  }
+  ```
+
+  > 可以使用`t.setPriority(int n)`谁当优先级，范围是`0~10`，默认是5，优先级越高被调度的可能性越大
+
+## 线程的状态
+
+一个线程只能调用一次`start()`方法启动新线程，并在新线程中执行`run()`方法，一旦`run()`方法执行结束，线程也就结束了
+
+java的线程有以下几个状态：
+
++ new:新创建的线程，尚未执行
++ runnable：运行中的线程，即正在执行`run()`方法的java代码
++ blocked: 运行中的线程因某些操作阻塞而挂起
++ waiting: 运行中的线程因某些操作而等待
++ timed waiting：运行中的线程，因执行`sleep()`方法正在计时等待
++ terminated: 线程已终止，`run()`方法执行完毕
+
+```ascii
+         ┌─────────────┐
+         │     New     │
+         └─────────────┘
+                │
+                ▼
+┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+ ┌─────────────┐ ┌─────────────┐
+││  Runnable   │ │   Blocked   ││
+ └─────────────┘ └─────────────┘
+│┌─────────────┐ ┌─────────────┐│
+ │   Waiting   │ │Timed Waiting│
+│└─────────────┘ └─────────────┘│
+ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+                │
+                ▼
+         ┌─────────────┐
+         │ Terminated  │
+         └─────────────┘
+```
+
+当线程启动后，它可以在`Runnable`、`Blocked`、`Waiting`和`Timed Waiting`这几个状态之间切换，直到最后变成`Terminated`状态，线程终止。
+
+### 线程终止的原因
+
++ 正常终止:  `run()`方法执行到`return`语句返回
++ 意外终止：`run()`方法因为未捕获的异常导致线程终止
++ 强制终止：对某个线程对象调用`stop()`方法强制终止(不推荐)
+
+
+
+## `volatile`关键字
+
+`volatile`修饰线程间共享的变量，确保每个线程都能读取到更新后的变量值
+
+### Java内存模型
+
+在Java虚拟机中，变量的值保存在主存中，但是当线程访问变量时，它会先获取一个副本并将其保存在自己的工作内存中，如果线程修改了变量的值，虚拟机会在某个时刻把修改后的值写回主存，但是这个时间不确定，这样会导致一个线程更新了某个变量，另一个读取的还是之前的值（JVM还没有把主存中的值更新）,这就造成了多线程之间共享的变量不一致。
+
+```java
+┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+           Main Memory
+│                               │
+   ┌───────┐┌───────┐┌───────┐
+│  │ var A ││ var B ││ var C │  │
+   └───────┘└───────┘└───────┘
+│     │ ▲               │ ▲     │
+ ─ ─ ─│─│─ ─ ─ ─ ─ ─ ─ ─│─│─ ─ ─
+      │ │               │ │
+┌ ─ ─ ┼ ┼ ─ ─ ┐   ┌ ─ ─ ┼ ┼ ─ ─ ┐
+      ▼ │               ▼ │
+│  ┌───────┐  │   │  ┌───────┐  │
+   │ var A │         │ var C │
+│  └───────┘  │   │  └───────┘  │
+   Thread 1          Thread 2
+└ ─ ─ ─ ─ ─ ─ ┘   └ ─ ─ ─ ─ ─ ─ ┘
+```
+
+因此如果保证主存的变量值保持实时更新，就用到了`volatile`关键字
+
+使用`volatile`关键字的目的就是告诉虚拟机：
+
++ 每次访问变量时，总是获取主存的最新值
++ 每次修改变量后，立刻将新值写回内存
+
+**所以`volatile`解决了可见性问题：一个线程修改了某个共享变量时，其他线程能立刻看到修改后的值**
+
+**tips:**
+
+> 不同的架构jvm写回内存的速度是不同的，x86架构要远远快于arm架构，所以有时候x86架构的计算机上用不用`volatile`区别不大
