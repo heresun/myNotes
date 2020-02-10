@@ -1003,6 +1003,8 @@ java多线程编程的特点在于：
 
 ## 创建线程
 
+以下两种创建线程的方法其实都是通过`new Thread()`的，归根结底是只有一种创建线程的方法。
+
 + 方法一:从Thread类派生一个自定义类，覆写`run()`方法
 
   ```java
@@ -1037,6 +1039,131 @@ java多线程编程的特点在于：
   ```
 
   > 可以使用`t.setPriority(int n)`谁当优先级，范围是`0~10`，默认是5，优先级越高被调度的可能性越大
+
+## 销毁线程
+
+Java是无法销毁线程的，但是当`thread.isAlive()`的返回结果为false时，线程实际上时死掉了。
+
+
+
+## 启动线程并保持线程的运行顺序
+
+问题1：如何通过Java API启动一个线程
+
+> ```java
+> Thread t = new Thread(()->{sout("线程1")}, "t1");
+> t.start();
+> ```
+
+问题2：有线程t1, t2, t3，如何按t1-> t2-> t3的顺序运行线程
+
+> ```java
+> Thread t1 = new Thread(()->{sout("线程1")}, "t1");
+> Thread t2 = new Thread(()->{sout("线程2")}, "t2");
+> Thread t3 = new Thread(()->{sout("线程3")}, "t3");
+> t1.start();
+> t1.join();
+> 
+> t2.start();
+> t2.join();
+> 
+> t3.start();
+> t3.join();
+> ```
+
+问题3：以上的问题至少提供另外一种实现
+
+> ```java
+> main(String args[]){
+>     threadLoop();
+> }
+> // 通过自旋
+> public static void threadLoop(){
+>     Thread t1 = new Thread(()->{sout("线程1")}, "t1");
+>     Thread t2 = new Thread(()->{sout("线程2")}, "t2");
+>     Thread t3 = new Thread(()->{sout("线程3")}, "t3");
+>     
+>     t1.stasrt();
+>     while(t1.isAlive()){
+>         
+>     }
+>     t2.start();
+>     while(t2.isAlive()){
+>         
+>     }
+>     t3.start();
+>     while(t3.isAlive()){
+>         
+>     }
+> }
+> 
+> //通过等待的方式
+> public static void threadWait() throws InterruptedException {
+>     Thread t1 = new Thread(()->{sout("线程1")}, "t1");
+>     Thread t2 = new Thread(()->{sout("线程2")}, "t2");
+>     Thread t3 = new Thread(()->{sout("线程3")}, "t3");
+>     threadStartAndWait(t1);
+>     threadStartAndWait(t2);
+>     threadStartAndWait(t3);
+> }
+> 
+> public static void threadStartAndWait(Thread thread){
+>     if(Thread.State.NEW.equals(thread.getState())){
+>         thread.start();
+>     }
+>     
+>     
+>     while(thread.isAlive()){
+>         synchronized(thread){
+>             try{
+>                 thread.wait()
+>             }catch(Exception e){
+>                 throw new RuntimeException(e);
+>             }
+>         }
+>     }
+> }
+> ```
+
+## 如何停止一个线程
+
+```java
+ Thread thread = new Thread(()->{
+       if (!Thread.currentThread().isInterrupted()){//这一行代码必须配合该线程的中止操作才有用
+              System.out.println("hello");
+            }
+  },"thread");
+thread.start();
+thread.interrupt();//这个中止操作必须配合上面的那个判断才起作用，如果没有上面那个判断，这个中止操作仅仅只是改变了线程的中止状态，并没有触发动作
+```
+
+
+
+## 线程异常
+
++ 当线程异常时发生了什么？
+
+  > 发生了异常，主动抛出或者被动抛出
+
++ 线程异常怎么捕获？
+
+  ```java
+  // 按照线程执行顺序，捕获所有线程的异常
+  Thread.setDefaultUncaughtExceptionHandler((thread, throwable)->{
+  	System.out.printf("线程 %s 异常，异常信	息:%s\n",thread.getName(),throwable.getMessage());
+  });
+  
+  Thread thread = new Thread(()->{
+      throw new RuntimeException("出了个错！");
+  },"thread");
+  
+  thread.start();
+  
+  // 打印结果如下
+  // 线程 thread 异常，异常信息：出了个错！
+  ```
+
+  
 
 ## 线程的状态
 
