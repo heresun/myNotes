@@ -565,6 +565,209 @@ sp.release();
 
 线程池的作用主要是控制线程的运行数量，处理过程中将任务放入队列，然后在线程中启动这些任务，如果运行的线程数量超过了最大值，超出的线程等待，等其他线程执行完毕，再从队列中取出线程运行。
 
-+ 线程复用
-+ 控制最大并发数
-+ 管理线程
++ 线程复用：降低线程创建和销毁造成的损耗。
++ 提高响应速度
++ 控制最大并发数，可以起到削峰的作用
++ 管理线程：线程是稀缺资源，如果无限制的创建，不仅会消耗系统资源而且会增加系统的不稳定性，使用线程池可以实现统一分配、调优、监控。
+
+#### 咋用线程池
+
+##### 架构
+
+![image-20200210201833991](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200210201833991.png)
+
++ Executor（接口）
++ ExecutorService（接口）
++ **ThreadPoolExecutor**（类）
++ ScheduledThreadPoolExecutor（类）
++ Executors（工具类）
+
+##### 创建线程池	
+
+<font style="color:red">以下方法不可用</font>
+
++ ```java
+  Executors.newFixedThreadPool(int)//执行长期任务性能好，有固定的大小
+  ```
+
+  
+  
++ ```java
+  Executors.newSingleThreadExecutor()//一个任务一个任务地执行，一池一线程
+  ```
+
++ ```java
+  Executors.newCachedThreadPool()//执行很多短期异步任务，线程池根据需要创建线程，但是先前构建的线程在可用时使用它们。特点时可扩容，遇强则强
+  ```
+  
+  **<font style="color:red">创建线程池应该使用</font>**
+  
+  ```java
+  ExcutorService pool = new ThreadPoolExecutor(参数...)
+  ```
+  
+  **使用`Executors`返回的线程池对象的弊端如下：**
+  
+  1. **FixedThreadPool和SingleThreadPool**
+  
+     **允许的阻塞队列长度为Integer.MAX_VALUE，可能会堆积大量请求，导致OOM**
+  
+  2. **CachedThreadPool和ScheduledThreadPool**
+  
+     **允许的线程数量为Integer.MAX_VALUE，可能会创建大量线程，导致OOM**
+
+###### 正确创建线程池
+
+```java
+ExecutorService pool = new ThreadPoolExecutor(
+                3,
+                5,
+                3L,
+                TimeUnit.SECONDS,
+                new ArrayBlockingQueue<Runnable>(3),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.AbortPolicy()
+        );
+```
+
+
+
+##### 任务提交的两种方式
+
+1. `execute`只能提交`Runnable`类型的任务，无返回值；
+
+   `submit`既可以提交`Runnable`类型的任务，也可以提交`Callable`类型的任务，并且返回一个`Future`类型的返回值，如果提交的是`Runnable`类型的任务，返回值是null;
+
++ `excute`执行任务时，遇到异常直接抛出；
+
+  `submit`不会直接抛出，只有使用Future的`get`方法时才会抛出异常
+
+#### 线程池底层原理
+
+##### `ThreadPoolExecutor`的参数
+
+1. `int corePoolSize`:线程池中常驻核心线程数
+
+   > 核心线程数是惰性加载的。在创建线程池的时候不会创建，只有在提交任务的时候才会判断是否创建
+
+2. `int maximumPoolSize`：线程池中能容纳同时最大的执行线程数
+
+3. `long keepAliveTime`：空闲线程（超过corePoolSize的部分）的存活时间
+
+4. `TimeUnit unit`：存活时间单位
+
+5. `BlockingQueue<Runnabel> workQueue`：任务队列，被提交但还未被执行
+
+6. `ThreadFactory threadFactory`：生成线程池中线程的工厂，用于创建线程
+
+7. `RejectedExecutionHandler handler`：拒绝策略，表示队列满了，并且工作线程大于等于线程池的最大线程数，此时如何拒绝请求执行的runnable的策略
+
+##### 线程池底层逻辑图
+
+![image-20200210215327294](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200210215327294.png)
+
+   
+
+![image-20200210220640578](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200210220640578.png)
+
+##### JDK内置的拒绝策略
+
++ AbortPolicy(默认)：直接抛出`RejectedExecuptionException`阻止系统正常运行
++ CallerRunsPolicy:“调用者运行一种调节机制”，该策略不会抛弃任何，也不会抛异常，而是将任务退回到调用者，从而降低新任务的流量
++ DisgardOldestPolicy：抛弃等待队列中等待最久的任务，然会把当前任务加入队列，尝试再次提交当前任务
++ DisgardPolicy：该策略默默丢弃无法处理的任务，不予处理也不抛异常。在允许任务丢失的情况下，这是最好的策略
+
+#### 线程池总结
+
+1. 线程池什么时候创建线程？
+
+   > 任务提交的时候
+
+2. 核心线程占用后的其他任务是先放在阻塞队列中还是创建coreSize和maxSize之间的线程？
+
+   > 先放在阻塞队列中
+
+3. 阻塞对列中的任务什么时候取出？
+
+   > worker中的runWorker()一个任务完成后取出下一个任务
+
+4. 什么时候出发拒绝策略？
+
+   > 阻塞队列满，且正在运行的线程为maxSize，如果此时还有新任务，则出发阻塞队列
+
+5. coreSize和maxSize之间的线程什么时候会die？
+
+   > 空闲时间超时或者抛出异常
+
+6. task抛出异常，线程池中的这个线程还能运行其他任务么？
+
+   > 不能。但是会创建其他线程来运行。
+
+## 9.分支合并框架
+
+### 架构
+
+![image-20200212191936208](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200212191936208.png)
+
+![image-20200212192225642](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200212192225642.png)
+
+```java
+package com.heresun;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.RecursiveTask;
+
+public class ForkJoinDemo {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        MyTask myTask = new MyTask(1, 1000000000);
+        ForkJoinPool forkJoinPool = new ForkJoinPool();
+        ForkJoinTask<Integer> forkJoinTask = forkJoinPool.submit(myTask);
+        Integer o = forkJoinTask.get();
+        System.out.println(o);
+
+
+    }
+}
+
+class MyTask extends RecursiveTask<Integer> {
+
+    public static final int CONDITION = 10;
+    private int begin;
+    private int end;
+
+    public MyTask(int begin, int end) {
+        this.begin = begin;
+        this.end = end;
+    }
+
+    private int res;
+    @Override
+    protected Integer compute() {
+        if ((end-begin)<=10){
+            for (int i = begin; i <= end; i++) {
+                res += i;
+            }
+        }else{
+            int mid = begin + (end-begin)/2;
+            MyTask myTask = new MyTask(begin, mid);
+            MyTask myTask1 = new MyTask(mid + 1, end);
+
+            myTask.fork();
+            myTask1.fork();
+
+            res = myTask.join() + myTask1.join();
+        }
+
+
+        return res;
+    }
+}
+```
+
+
+
+## 10.异步回调
+
+没啥说的
