@@ -58,7 +58,7 @@ sychronized 用于修饰：
 
 3. 对齐填充
 
-   > HotSpot Vm的自动内存管理系统要求对象起始地址必须为8字节的整数倍，也就是说对象的大小必须为8字节的整数倍，因为对象头部分正好是8字节的倍数，因此，当对象示例数据部分没有对齐时，就需要通过对奇填充补全对象的size，使其大小满足8字节的倍数
+   > HotSpot Vm的自动内存管理系统要求对象起始地址必须为8字节的整数倍，也就是说对象的大小必须为8字节的整数倍，因为对象头部分正好是8字节的倍数，因此，当对象示例数据部分没有对齐时，就需要通过对齐填充补全对象的size，使其大小满足8字节的倍数
 
    ![img](https://img-blog.csdn.net/20170603163237166?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvamF2YXplamlhbg==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
 
