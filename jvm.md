@@ -134,6 +134,35 @@ JVM的内存模型是和并发息息相关的，目的是保证多线程之间�
 + 使用
 + 卸载（可选）
 
+```java
+// 这段代码说明了在初始化阶段，静态变量的初始化是按照代码的先后顺序进行的
+public class MyTest2 {
+    public static void main(String[] args) {
+        TestClass instance = TestClass.getInstance();
+        System.out.println(TestClass.a);//1
+        System.out.println(TestClass.b);//10
+    }
+}
+
+class TestClass{
+    public static int a;
+    public static TestClass testClass = new TestClass();
+    private TestClass(){
+        a++;
+        b++;
+        System.out.println("+++"+a);//1
+        System.out.println("+++"+b);//1
+    }
+    public static int b=10;
+
+    public static TestClass getInstance(){
+        return testClass;
+    }
+}
+```
+
+
+
 ## 类的加载
 
 类的加载是指将类的.class文件的二进制数据读入内存，放在运行时数据区的方法区中，然后在内存中创建一个java.lang.Class对象(JVM规范并未说明该对象应放在哪里，HotSpot将其放在方法区), 用来存放类在方法区内的数据结构
@@ -162,7 +191,7 @@ Java程序对类的使用方式可以分为两种：
 
   2. 访问某个类或接口静态变量，或者对类的静态变量赋值
 
-     > + 如果该静态变量被定义为`static final`,那么在编译阶段，该常量会被存入到调用这个常量的方法所在的类的常量池中，调用类并没有直接引用这个定义这个常量的类，因此并不会触发定义常量的类的初始化
+     > + 如果该静态变量被定义为`static final`,那么在编译阶段，该常量会被存入到调用这个常量的方法所在的**类的常量池**中，调用类并没有直接引用这个定义这个常量的类，因此并不会触发定义常量的类的初始化
      > + 但是如果这个常量的值无法在编译期确定，该常量就不会被放在调用这个常量的方法所在的类的常量池中，这是就是主动使用定义常量的类，那么定义这个常量的类就会被初始化
 
   3. 调用类的静态方法
@@ -174,6 +203,8 @@ Java程序对类的使用方式可以分为两种：
   4. 反射
 
   5. 初始化一个类的子类
+
+     > 调用一个接口的静态常量时并没有到初始化阶段，在编译期就把常量进行了替换，因此既不需要初始化父接口也不需要初始化本接口，访问父类的常量也是如此。接口的初始化应该是实现接口或者接口的常量是运行时常量，这时父接口和当前接口都需要初始化
 
   6. Java虚拟机启动时被标记为启动的类
 
