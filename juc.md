@@ -185,7 +185,7 @@ class Resource {
     }
 
     public synchronized void printNumLetter() throws InterruptedException {
-        //判断,这里应该把if改为while，因为存在虚假唤醒
+        //判断,这里应该把if改为while，因为存在虚假唤醒,因为if只判断一次
         if (num % 2 != 0 && num > 0) {
             this.wait();
         }
@@ -524,7 +524,7 @@ cb.await();
 ### Semaphore
 
 ```java
-Semaphore sp = new Semaphore(int, boolean);
+Semaphore sp = new Semaphore(int, boolean);//
 sp.acquire();
 sp.release();
 ```
