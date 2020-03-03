@@ -67,16 +67,20 @@ https://www.cnblogs.com/liujia1990/p/9024884.html
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:p="http://www.springframework.org/schema/p"<!--p明明空间,property-->
-       xmlns:c="http://www.springframework.org/schema/c"<!--c命名空间,constructor-arg-->
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:c="http://www.springframework.org/schema/c"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
-        https://www.springframework.org/schema/beans/spring-beans.xsd">
-    
-    <bean id="user" class="com.sundehui.domain.User">
-        <property name="accountDao" ref="accountDao"/>
-        <property name="itemDao" ref="itemDao"/>
-    </bean>
-    
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx
+	    http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop
+        https://www.springframework.org/schema/aop/spring-aop.xsd ">
+
 </beans>
 ```
 
@@ -881,6 +885,96 @@ void afterReturning(@Nullable Object returnValue,
 
 # 9 声明式事务
 
+声明式事务:不改变源代码,使用AOP进行事务管理
+
+编程式事务:在源代码中进行事务管理
+
+依赖:
+
+```xml
+<dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>5.2.1.RELEASE</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+            <version>5.2.1.RELEASE</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <version>5.2.1.RELEASE</version>
+        </dependency>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.47</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId>
+            <version>3.5.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis-spring</artifactId>
+            <version>1.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mchange</groupId>
+            <artifactId>c3p0</artifactId>
+            <version>0.9.5.2</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.12</version>
+            <scope>provided</scope>
+        </dependency>
+```
+
+
+
 ## 9.1 事务
 
 事务涉及到数据一致性问题, 要么都成功要么都失败
+
+## 9.2 配置声明式事务
+
+### 方法一: 标准配置
+
+```xml
+	<!--开启事务-->
+    <bean id="txManager" 
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+	<!--结合aop实现事务织入-->
+	<!--配置事务通知-->
+    <tx:advice id="txAdvice" transaction-manager="txManager">
+	<!--给那些方法配置事务， propagation 事务的传播特性-->
+        <tx:attributes>
+            <tx:method name="*" propagation="REQUIRED"/>
+        </tx:attributes>
+    </tx:advice>
+
+	<!--配置事务切入-->
+    <aop:config>
+        <aop:pointcut id="txPointCut" 
+                      expression="execution(* com.sundehui.dao.*.*(..))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="txPointCut"/>
+    </aop:config>
+```
+
