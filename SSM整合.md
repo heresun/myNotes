@@ -301,6 +301,64 @@ https://www.cnblogs.com/liujia1990/p/9024884.html
    UserDao dao = session.getMapper(UerDao.class);
    ```
 
+   xml配置文件
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+           "http://mybatis.org/dtd/mybatis-3-config.dtd">
+   <configuration>
+       <typeAliases>
+           <package name="com.sundehui.domain"/>
+       </typeAliases>
+       <environments default="mysql">
+           <environment id="mysql">
+               <transactionManager type="JDBC"/>
+               <dataSource type="POOLED">
+                   <property name="driver" value="com.mysql.jdbc.Driver"/>
+                   <property name="url" value="jdbc:mysql:///graduation?useUnicode=true&amp;characterEncoding=UTF-8&amp;useSSL=false"/>
+                   <property name="username" value="root"/>
+                   <property name="password" value="sundehui"/>
+               </dataSource>
+           </environment>
+       </environments>
+       <!-- 使用的是注解 -->
+       <mappers>
+           <!-- dao接口名要和mapper文件一样 -->
+           <mapper class="com.sundehui.dao.IAccountDao"/>
+       </mappers>
+   </configuration>
+   ```
+
+   mapper文件
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+           "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+   <mapper namespace="com.sundehui.dao.IAccountDao">
+       <select id="findAll" resultType="account">
+           select * from account;
+       </select>
+   
+   </mapper>
+   ```
+
+   注意,需要在pom.xml文件build标签下添加如下配置,解决无法导出mapper文件
+
+   ```xml
+   <resources>
+               <resource>
+                   <directory>src/main/java</directory>
+                   <includes>
+                       <include>**/*.xml</include>
+                   </includes>
+                   <filtering>true</filtering>
+               </resource>
+           </resources>
+   ```
+
+   
+
 8. 将mybatis整合进spring，就是把`mybatisConfig.xml`文件的内容放入`applicationContext.xml`中
 
    > 怎样才算整合成功呢？在service中能够调用dao对象，这个对象是由spring容器管理的dao接口的代理对象

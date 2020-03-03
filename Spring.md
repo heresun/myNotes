@@ -425,12 +425,462 @@ https://blog.csdn.net/qq_36381855/article/details/79752689
 
 即真实角色委托代理角色去做真实角色想做的事
 
+**好处**：
+
+1. 使真实角色的操作更加纯粹，不用去关注一些公共业务
+2. 公共业务交给代理角色，实现了业务的分工
+3. 公共业务发生拓展时，方便集中管理
+
 ## 6.1 角色分析
 
 + 抽象角色：一般用接口
 + 真实角色：被代理的角色
-+ 代理角色：代理真实角色，它一般做一些附属操作
++ 代理角色：代理真实角色，它一般做一些增强操作
 + 客户角色：访问代理对象的角色
 
 ## 6.2 静态代理
 
+以租房这一事件举例： 
+
+1. 抽象角色，为真实角色和代理角色提供公共方法
+
+   ```java
+   public interface AbstraceRole {
+        void rent ();
+   }
+   ```
+
+2. 真实角色，实现了抽象角色
+
+   ```java
+   public class RealRole implements AbstraceRole {
+       public void rent() {
+           System.out.println("我是房东，我要出租房子");
+       }
+   }
+   ```
+
+3. 代理角色，实现了抽象角色
+
+   ```java
+   public class ProxyRole implements AbstraceRole {
+       //代理角色以组合的方式代理真实角色
+       private RealRole realRole;
+   
+       public ProxyRole(RealRole realRole) {
+           this.realRole = realRole;
+       }
+   	//实现真实角色功能
+       public void rent (){
+           realRole.rent();
+       }
+       public void fare(){
+           sout("收租房费");
+       }
+   }
+   ```
+
+4. //客户角色，从访问真实角色转为访问代理角色
+
+   ```java
+   public class ClientRole {
+       public static void main(String[] args) {
+           RealRole realRole = new RealRole();
+           ProxyRole proxyRole = new ProxyRole(realRole);
+           proxyRole.rent();
+       }
+   }
+   ```
+
+**静态代理的缺点：**
+
+1. 一个真实角色就需要为其创建一个代理角色，代码量较大
+
+## 6.3 动态代理
+
++ 动态代理的角色划分和静态代理一样
++ 动态代理的代理类时动态生成的，不是直接写好的
++ 动态代理分为两大类：基于接口的动态代理，基于类的动态代理
+  + 基于接口：JDK动态代理 (重点)
+  + 基于类：cglib
+  + java字节码实现：Javasist
+
+**`Proxy`和`InvocationHandler`时JDK动态代理的核心类和接口**
+
+> **Proxy** 类提供了创建动态代理类和实例的静态方法，也是其所创建的代理类的超类 
+>
+> **InvocationHandler** 是由代理实例的**调用处理程序**实现的接口 
+>
+> > 每个代理实例都有一个与之关联的**调用处理程序**，当在代理类上调用方法时，该**方法调用**将被编码并分派到其调用处理程序的invoke()方法 
+
+1. 抽象角色: 同静态代理
+
+2. 真实角色：同静态代理
+
+3. 调用处理程序
+
+   ```java
+   import java.lang.reflect.InvocationHandler;
+   import java.lang.reflect.Method;
+   import java.lang.reflect.Proxy;
+   
+   public class ProxyInvocationHandler<T> implements InvocationHandler {
+       private T target;
+   
+       public void setTarget(T target) {
+           this.target = target;
+       }
+       //获取代理类，代理类实现了真实角色实现的接口
+       public T getProxyObj(){
+           return (T)Proxy.newProxyInstance(this.getClass(). getClassLoader(),
+                                            target.getClass().getInterfaces(),
+                                            this);
+       }
+   	//当在代理类上调用方法时，该方法调用将被编码并分派到其调用处理程序的invoke()方法 
+       public Object invoke(Object proxy, Method method, Object[] args)
+           throws Throwable {
+           Object invoke = method.invoke(target, args);
+           return invoke;
+       }
+   }
+   ```
+
+4. 客户角色
+
+   ```java
+   public class Client {
+       public static void main(String[] args) {
+           //创建真实角色
+           RealRole realRole = new RealRole();
+           //创建调用处理程序
+           ProxyInvocationHandler<RealRole> pih = new ProxyInvocationHandler();
+           //注入真实角色对象到调用处理程序
+           pih.setTarget(realRole);
+           //获取代理对象
+           AbstraceRole proxyObj =  pih.getProxyObj();
+           //调用代理对象方法
+           proxyObj.rent();
+       }
+   }
+   ```
+
+动态代理的好处：
+
+1. 一个动态代理代理的是一个接口，一般对应一类业务
+2. 一个动态代理类代理了多个类，只要这些类实现了同一个接口就可以
+3. 代码量相对于静态代理大大减少
+
+# 7 AOP
+
+在不改变源代码的情况下进行增强.
+
+## 7.1 什么是AOP？
+
+AOP（Aspect Oriented Programming）意为面向切面编程，通过**预编译**和**运行期动态代理**实现程序功能的统一维护的一种技术。它是OOP的延续，是函数式编程的一种衍生范型。利用AOP可以对业务逻辑的各个部分进行隔离，从而使业务逻辑各部分之间的耦合度降低，提高程序可用性，提高开发效率。
+
+![image-20200302233935633](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200302233935633.png)
+
+## 7.2 AOP在Spring中的应用
+
+==提供声明式事务，允许用户自定义切面==
+
++ 横切关注点：跨越应用程序多个模块的方法或功能。即，与我们的业务无关的，但我们需要关注的部分，就是横切关注点。如日志、安全、缓存、事务......
+
++ 切面 (Aspect)：横切关注点被模块化的特殊对象，即一个类
+
++ 通知 (Advice)：切面必须要完成的工作，即类的一个方法
+
++ 目标 (Target)：被通知的对象  
+
++ 代理 (Proxy)：向目标对象应用通知之后创建的对象
+
++ 切入点 (CutPoint)：切面通知执行的”地点“的定义
+
++ 连接点 (JoinPoint)：与切入点匹配的执行点
+
+  ![image-20200302234820813](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200302234820813.png)
+
+Spring支持五种类型的Advice，这些都是接口，是Spring的原生api
+
+![image-20200303133056838](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200303133056838.png)
+
+## 7.3 Spring中实现AOP
+
+首先导入包：
+
+```xml
+<!-- https://mvnrepository.com/artifact/org.aspectj/aspectjweaver -->
+<dependency>
+    <groupId>org.aspectj</groupId>
+    <artifactId>aspectjweaver</artifactId>
+    <version>1.9.5</version>
+</dependency>
+```
+
+### 方式1：使用Spring的接口
+
+前置通知：`MethodBeforeAdvice`
+
+```java
+/*method: 被代理的对象的方法对象
+* args: 被代理的接口的方法的参数列表
+* target: 被代理的对象
+*/
+void before(Method method, Object[] args, @Nullable Object target) throws Throwable;
+```
+
+后置通知：`AfterReturningAdvice`
+
+```java
+/* returnValue：被代理对象的方法的返回值
+*  method：同上
+*  agrs：同上
+*  target：被代理的对象
+*/
+void afterReturning(@Nullable Object returnValue,
+                    Method method, 
+                    Object[] args,
+                    @Nullable Object target) throws Throwable;
+```
+
+
+
+配置文件需要增加的内容
+
+```xml
+<!--注册bean-->
+<bean id="userService" class="com.sundehui.service.UserServiceImpl"/>
+<bean id="logAfter" class="com.sundehui.aop.LogAfter"/>
+<bean id="logBefore" class="com.sundehui.aop.LogBefore"/>
+<!--配置aop-->
+<aop:config>
+  <!--使用expression表达式指定切入点-->
+  <!--execution(修饰符  返回值  包名.类名/接口名.方法名(参数列表)), * 表示任意，..表示任意参数列	表-->
+  <aop:pointcut id="pointCUt" 
+         expression="execution(* * com.sundehui.service.UserServiceImpl.*(..))"/>
+   <!--执行环绕增加-->
+  <aop:advisor advice-ref="logBefore" pointcut-ref="pointCUt"/>
+  <aop:advisor advice-ref="logAfter" pointcut-ref="pointCUt"/>
+</aop:config>
+```
+
+### 方式2：自定义类实现AOP
+
+1. 自定义一个切面类
+
+   ```java
+   public class MyAop {
+       public void before (){
+           System.out.println("=========方法执行前=============");
+       }
+   
+       public void after (){
+           System.out.println("=========方法执行后=============");
+       }
+   }
+   ```
+
+2. 在配置文件中配置aop
+
+   ```xml
+   <!--引入自定义切面类-->
+   <bean id="myAop" class="com.sundehui.aop.MyAop"/>
+   <aop:config>
+     <!--将aop的切面引用指向自定义切面类-->
+     <aop:aspect ref="myAop">
+        <!--设置切入点-->
+       <aop:pointcut id="pointCut" 
+            expression="execution(* com.sundehui.service.UserServiceImpl.*(..))"/>
+       <!--方法执行前通知-->
+       <aop:before method="before" pointcut-ref="pointCut"/>
+       <!--方法执行后通知-->
+       <aop:after method="after" pointcut-ref="pointCut"/>
+     </aop:aspect>
+   </aop:config>
+   ```
+
+   
+
+### 方式3: 注解实现aop
+
+1. 自定义一个切面类
+
+   ```java
+   import org.aspectj.lang.annotation.After;
+   import org.aspectj.lang.annotation.Aspect;
+   import org.aspectj.lang.annotation.Before;
+   
+   @Aspect//标注该类是一个切面
+   public class MyAop {
+   	//execution表达式定义切入点
+       @Before("execution(* com.sundehui.service.UserServiceImpl.*(..))")
+       public void before (){
+           System.out.println("=========方法执行前=============");
+       }
+   
+       @After("execution(* com.sundehui.service.UserServiceImpl.*(..))")
+       public void after (){
+           System.out.println("=========方法执行后=============");
+       }
+   }
+   ```
+
+2. 在配置文件中添加
+
+   ```xml
+   <!--将自定义切面类给Spring托管-->
+   <bean id="myAop" class="com.sundehui.aop.MyAop"/>
+   <!--开启aop的注解支持,false表示使用JDK的动态代理,true表示cglib-->
+   <aop:aspectj-autoproxy proxy-target-class="false"/>
+   ```
+
+   
+
+# 8 整合mybatis
+
+## 8.1 引入jar包
+
+```xml
+		<dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>5.2.1.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <version>5.2.1.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId>
+            <version>3.4.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis-spring</artifactId>
+            <version>2.0.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>1.9.5</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.47</version>
+        </dependency>
+```
+
+## 共同配置(配置文件均在spring的配置文件中书写)
+
+```xml
+ <!--引入了外部配置文件-->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+    <!--    Spring整合mybatis框架-->
+    <!--1，配置连接池-->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${jdbc.driver}"/>
+        <property name="jdbcUrl" value="${jdbc.url}"/>
+        <property name="user" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+    <!--2，配置SqlSessionFactory工厂-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <!--在idea中,这里必须为树状目录,点分目录识别不到-->
+        <property name="mapperLocations" value="classpath:com/sundehui/dao/*Dao.xml"/>
+        <property name="configLocation" value="classpath:mybatisConfig.xml"/>
+    </bean>
+```
+
+
+
+## 方式一: 自动扫描,创建代理对象
+
+```xml  
+  <bean id="mapperScanner" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+       <property name="basePackage" value="com.sundehui.dao"/>
+      <!--如果只有一个数据源,此处不用配置-->
+<!--   <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>-->
+    </bean>
+```
+
+
+
+## 方式二: 实现dao接口,向实现类注入SqlSessionTemplate对象
+
+1. 配置文件
+
+   ```xml
+   <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+           <constructor-arg index="0" ref="sqlSessionFactory"/>
+   </bean>
+   ```
+
+2. 实现dao接口
+
+   ```java
+   import com.sundehui.domain.Account;
+   import org.mybatis.spring.SqlSessionTemplate;
+   import org.springframework.beans.factory.annotation.Autowired;
+   import java.util.List;
+   
+   public class IAccountDaoImpl implements IAccountDao {
+   
+       @Autowired
+       private SqlSessionTemplate sqlSession;
+       
+       @Override
+       public List<Account> findAll() {
+           return sqlSession.getMapper(IAccountDao.class).findAll();
+       } 
+   }
+   
+   ```
+
+3. 将实现类注入容器
+
+   ```xml
+   <bean id="accountDaoImpl" class="com.sundehui.dao.IAccountDaoImpl"/>
+   ```
+
+
+
+## 方式三: 继承SqlSessionDaoSupport类并实现dao接口
+
+==`SqlSessionDaoSupport`类已经包`SqlSession`对象封装好了,其子类只需要通过`getSqlSession()`方法就可以获得`SqlSession`对象.==
+
+1. 继承SqlSessionDaoSupport类并实现dao接口
+
+   ```java
+   public class IAccountDaoImpl extends SqlSessionDaoSupport implements IAccountDao {
+       @Override
+       public List<Account> findAll() {
+           return getSqlSession().getMapper(IAccountDao.class).findAll();
+       }
+   }
+   ```
+
+2. 配置文件
+
+   ```xml
+    <bean id="accountDaoImpl" class="com.sundehui.dao.IAccountDaoImpl">
+           <property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+   </bean>
+   ```
+
+   
+
+# 9 声明式事务
+
+## 9.1 事务
+
+事务涉及到数据一致性问题, 要么都成功要么都失败
