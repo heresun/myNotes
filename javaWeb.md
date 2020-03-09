@@ -4,6 +4,8 @@ server.xml是tomcat的核心配置文件
 
 ![image-20200305231646612](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200305231646612.png)
 
+==WEB-INF下的jsp无法在浏览器或者超链接中访问，也不可以重定向访问，可以在服务器内部转发访问==
+
 ## 1.1 网站是如何访问的
 
 1. 浏览器输入url，回车
@@ -218,7 +220,7 @@ session.removeAttribure(String name);//移除键值对
 服务器对当前应用的Session是以map的形式进行管理的，这个map称为**Session列表**。其key是一个128位长度的随机串，称其为JSESSIONID，value为session对象的引用。
 
 1. 客户端访问服务器，第一次执行到request.getSession()时，创建一个Map.Entry对象，以JSESIONID(随机串)为键，session对象的引用为值，放入Session列表中
-2. 服务器以JSESSION为name，以JSESSION的值(随机串)为value，生成一个cookie对象，并将其放入响应头中，发送给客户端
+2. 服务器以"JSESSION"为name，以JSESSION的值(随机串)为value，生成一个cookie对象，并将其放入响应头中，发送给客户端
 3. 客户端接收到这个cookie后，会将其保存到缓存中，再次发送请求时，会携带这个cookie
 4. 服务器接受到cookie后，到Session列表中进行查找，找到后返回JSESSIONID对应的Session对象引用
 
@@ -233,6 +235,33 @@ session在某个时间一直未被访问，该session将超时进而失效，默
 ```
 
 即使还未超时，也可以手动设置为失效:`session.invalidate()`
+
+#### 7.2.2.5 Cookie禁用后的Session
+
+如果浏览器禁用了cookie，在同一个会话中，每次响应头中的cookie的JSESSIONID都不一样，因为浏览器在发出请求的时候没有携带保存JSESSIONID的cookie，服务器认为每一次请求都是一个新的会话
+
+但是仍然可以访问服务器的session对象：将服务器发来的响应头的JSESSION的值记录下来，在发起访问的时候在url后追加`;jsessionid=xxxxxx....`
+
+#### 7.2.2.6 Cookie禁用后的Session重定向跟踪
+
+如果浏览器禁用了cookie，重定向的时候同样无法在请求中添加cookie，JSESSIONID也无法传输到服务端，那么该怎么办才能让重定向后的地址能够获取到session对象，并进行跟踪呢？只需要对重定向的路径进行编码即可
+
+```java
+String uri = request.getContextPath()+"路径";
+uri = response.encodeRedirctURL(uri);
+```
+
+此时，uri在最后已经添加了`;jsessionid=xxxxxx...`，也就是自动实现了`7.2.2.5`中的功能，即便浏览器不禁cookie这个也可以正常访问，==但是jsessionid会暴露在浏览器的url栏==
+
+#### 7.2.2.6 Cookie禁用后的Session非重定向跟踪
+
+```java
+uri = response.encodeURL("访问路径");
+```
+
+==同样，jsessionid会暴露在浏览器的url栏==
+
+
 
 # 8 域属性空间范围对比
 
@@ -254,17 +283,121 @@ session在某个时间一直未被访问，该session将超时进而失效，默
 
 置入其中的域属性是请求范围的，可以跨Servlet共享数据，但是这些servlet必须在同一请求中，即这些servlet是请求转发的
 
+## 8.3 pageContext
+
+置入其中的域属性是页面范围的，仅在当前jsp页面内有效
+
+# 9 JSP
+
+```jsp
+<%%>            放代码片段
+<%=%>			将标签中的内容输出到页面
+<%!%>			jsp 声明
+<%----%>		注释
+```
+
+## 9.1 设置错误页面：
+
+1. 创建错误页面
+
+2. 在web.xml中注册错误页面
+
+   ```xml
+   	<error-page>
+           <error-code>404</error-code>
+           <location>/pages/404.jsp</location>
+       </error-page>
+       <error-page>
+           <error-code>500</error-code>
+           <location>/pages/500.jsp</location>
+       </error-page>
+   ```
+
+## 9.2 jsp指令
+
+```jsp
+<%@ include file=""%> 引入别的文件内容到当前文件，把别的页面合并到本页面
+<jsp:include page=""/>  引入别的文件，没有合并
+```
+
+## 9.3 9大对象
+
+1. pageContext    其保存的数据仅在当前页面有效
+2. request             其保存的数据仅在一次请求中有效
+3. response
+4. session              其保存的数据仅在一次会话中有效
+5. application -- ServletContext         其保存的数据在整个应用声明周期有效
+6. config  --  ServletConfig
+7. out
+8. page
+9. exception
+
+## 9.4 jsp、jstl标签
+
+### 9.4.1 jsp标签
+
+1. <jsp:include page=""/>, 引入某个jsp页面
+
+2. <jsp:forward page=""/>, 转发到某个jsp页面
+
+   该标签还有子标签
+
+   ```jsp
+   <jsp:forward page="xxx.hsp">
+       <jsp:param name="name" value="value" />
+   </jsp:forward>
+   ```
+
+3. ........
+
+### 9.4.2 jstl标签
+
+**核心标签**
+
+1. 导入包并引入核心标签的uri
+
+   ```jsp
+   <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+   ```
+
+   ```xml
+   <dependency>
+       <groupId>javax.servlet</groupId>
+       <artifactId>jstl</artifactId>
+       <version>1.2</version>
+   </dependency>
+   
+   ```
+
+2. 使用
+
+   ```jsp
+   <c:set var="name" value="孙德辉"/>  定义变量，变量名为name， 值为“孙德辉”
+   <c:choose> 相当于switch语句
+       <c:when test="${name=="孙德会"}">
+           <c:out value="错了"/>
+       </c:when>
+       <c:when test="${name=="孙德辉"}">
+       	<c:out value="对了"/>
+       </c:when>
+   </c:choose>
+   
+   <%--item是每次遍历的值，
+       items是被遍历的集合
+       begin是遍历的开始位置，默认值为0
+       end是遍历的结束位置，默认值为集合的长度-1
+       step是遍历的不长，默认是1
+       --%>
+   <c:foreach var="item" items="${list}">
+   	<c:out value="${item}"/>
+   </c:foreach>
+   <c:foreach var="item" items="${list}" begin="" end="" step="">
+   	<c:out value="${item}"/>
+   </c:foreach>
+   ```
+
+   
 
 
 
-
-
-
-
-
-
-
-
-
-
-
+![image-20200307211525632](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200307211525632.png)
