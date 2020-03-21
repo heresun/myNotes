@@ -279,8 +279,6 @@ controller默认是将数据转发到jsp,
 
    ![image-20200305040114922](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200305040114922.png)
 
-![](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200305135840481.png)
-
 #  9 文件上传
 
 1. 添加jar包

@@ -11,8 +11,8 @@
 + `ldc`：表示将int,float,或者string类型的常量从常量池中推送至栈顶
 + `bipush`：表示将单字节(-128~127)的常量推送至栈顶
 + `sipush`：表示将短整型(--32768~32767)的产量推送至栈顶
-+ `iconst_0`~`iconst_5`：表示将int型0~5常量推送至栈顶
-+ `iconst_m1`: 表示将int型的-1常量推送至栈顶
++ `iconst_0`-`iconst_5`：表示将int型0~5常量入操作数栈
++ `iconst_m1`: 表示将int型的-1常量入操作数栈
 + `anewarray`：创建一个引用类型的一维数组，并将其引用值压入栈顶
 + `newarray`：创建一个指定的原始类型的数组，并将其引用压入栈顶
 + `multianewarray`：创建一个（原始类型或引用类型）多维数组，并将其引用值压入栈顶
@@ -293,7 +293,83 @@ class TestClass{
 
 ### 类加载的过程图解
 
-<img src="C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200301153046376.png" alt="image-20200301153046376" style="zoom:80%;" />
+<img src="C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200301153046376.png" alt="image-20200301153046376" style="zoom: 150%;" />
+
+
+
+# 堆
+
+
+
+![image-20200310211227210](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200310211227210.png)
+
+
+
+假设给堆分配300MB内存
+
+年轻代：100MB
+
++ Eden：80MB
++ From：10MB
++ To：10MB
+
+老年代：200MB
+
+当Eden放满，执行**minor GC**，回收垃圾对象（通过可达性分析后的无引用对象），经历了15次minor GC（即分代年龄为15）还未被回收的对象会被放到老年代，老年代满了执行**full GC**，对整个堆内存进行垃圾回收，释放不出空间就OOM，==每次full GC就会出现STW现象==
+
+## jvm调优
+
+jvm调优主要调整下面两个指标：
+
+1. <font style="color:orange">停顿时间</font>: 执行垃圾回收时中断应用执行的时间，即STW的时间： -XX:MaxGCPaushMillis
+2. <font style="color:orange">吞吐量</font>：垃圾收集时间和总时间的占比为1/(n+1), 吞吐量为1-1/(n+1)：-XX:GCTimeRatio=n
+
+调优步骤：
+
+1. 打印GC日志：jvm启动时添加如下参数
+
+   + -XX:+PrintGCDetails
+   + -XX:+PrintGCTimeStamps
+   + -XX:+PrintGCDateStamps
+   + -Xloggc:./gc.log
+
+   Tomcat直接加在JAVA-OPTS中
+
+2. 分析日志得到关键性指标
+
+3. 分析GC原因，调优JVM参数
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

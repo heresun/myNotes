@@ -161,7 +161,7 @@ Git是分布式版本控制系统，同一个Git仓库，可以分布到不同�
 
    ​	`git push origin master`
 
-> 此时我在github创建仓库时添加了README.md文件，但是这个文件在我的本地库中没有，在运行`git push -u origin master`时发生了如下错误
+> 此时我在github创建仓库时添加了README.md文件，但是这个文件在我的本地库中没有，在运行`git push -u origin master`时发生了如下错误给i他
 >
 > ![image-20200127132623290](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200127132623290.png)
 >
@@ -329,7 +329,7 @@ $ git cherry-pick 4c805e2
 - `master`分支是主分支，因此要时刻与远程同步；
 - `dev`分支是开发分支，团队所有成员都需要在上面工作，所以也需要与远程同步；
 - bug分支只用于在本地修复bug，就没必要推到远程了，除非老板要看看你每周到底修复了几个bug；
-- feature分支是否推到远程，取决于你是否和你的小伙伴合作在上面开发。
+- feature分支是否推到远程，取决于你是否和你的小伙伴合作在上面开发
 
 #### 抓取分支
 
