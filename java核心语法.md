@@ -703,10 +703,8 @@ method.invoke(s,6);//第一个参数为调用该方法的实例，第二个参�
   > `Constructor`的使用于`Method`几乎一样，只是在调用的形式和返会的结果不一样,如下
 
 ```java
-        Constructor<Person> cons =Person
-            	.class
-                .getConstructor(String.class);
-        Person person = constructor.newInstance("sdfg");
+Constructor<Person> cons =Person.class.getConstructor(String.class);
+Person person = cons.newInstance("sdfg");
 
 
 class Person{
@@ -794,17 +792,16 @@ Integer.class.isAssignableFrom(Number.class) //false
 可以注解其他的注解，一般使用元注解而不需要自己定义
 
 1. `@Target`：它用于定义注解能够应用于源码的哪些位置
-
-   + @Target(ElementType.Type): 类或接口
-
-   + @Target(ElementType.FIELD):域
-
-   + @Target(ElementType.METHOD)：方法
-
-   + @Target(ElementType.CONSTRUCTOR)：构造方法
-
-   + @Target(ElementType.PARAMETER):方法参数
-
++ @Target(ElementType.Type): 类或接口
+   
++ @Target(ElementType.FIELD):域
+   
++ @Target(ElementType.METHOD)：方法
+   
++ @Target(ElementType.CONSTRUCTOR)：构造方法
+   
++ @Target(ElementType.PARAMETER):方法参数
+   
 2. `@Retention`：注解定义了注解的生命周期，如果不存在，默认为CLASS
 
    + @Retention.SOURCE: 仅保留到源代码中，编译时使用
@@ -884,7 +881,7 @@ public class Pair<T> {//T称为泛型标识--类型形参
         return new Pair<T>(first, last);
     }
     
-    // 将T该为K，将静态方法的泛型和实例方法的泛型分开，实例泛型方法仅仅把static去掉就可以了
+    // 将T改为K，将静态方法的泛型和实例方法的泛型分开，实例泛型方法仅仅把static去掉就可以了
     public static<K> Pair<K> create(K first, K last) {
         return new Pair<K>(first, last);
     }
@@ -892,9 +889,9 @@ public class Pair<T> {//T称为泛型标识--类型形参
 
 ```
 
-## 类型擦拭
+## 类型擦除
 
-**Java语言的泛型实现方式是擦拭法**
+**Java语言的泛型实现方式是擦除法**
 
 所谓擦拭法：虚拟机对泛型一无所知，所有的工作都是编译器做的，即泛型是一种语法糖，应用于编译期
 
@@ -1248,3 +1245,11 @@ java的线程有以下几个状态：
 **tips:**
 
 > 不同的架构jvm写回内存的速度是不同的，x86架构要远远快于arm架构，所以有时候x86架构的计算机上用不用`volatile`区别不大
+
+
+
+
+
+L829944287093795
+
+L512754328850080 

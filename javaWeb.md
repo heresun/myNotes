@@ -401,3 +401,20 @@ uri = response.encodeURL("访问路径");
 
 
 ![image-20200307211525632](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200307211525632.png)
+
+JSESSIONID=6AC3BF610C059D35B644053BED131D4E
+
+jsessionid=EC187056C8EDF744B16FF813BAF83DFC
+
+
+
+
+
+# 10 Servlet声明周期
+
+1. 创建servlet对象：执行init方法，只执行一次
+   + servlet对象什么时候创建？
+     + 默认情况是第一次访问时，servlet被创建，然后执行init方法
+     + 可以配置其创建时机
+2. 提供服务：执行Service方法，执行多次
+3. 被销毁：Servlet服务器正常关闭时，执行destroy方法，只执行一次

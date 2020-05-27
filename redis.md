@@ -123,7 +123,7 @@ redis有五种常用数据类型：string, hash, list, set, sorted_set
   >   strlen key # 如果过key不存在，返回 0
   >   ```
   >
-  > + 追加信息到原始信息的尾部，古国原始信息不存在，就创建
+  > + 追加信息到原始信息的尾部，如果原始信息不存在，就创建
   >
   >   ```shell
   >   append key value
@@ -164,7 +164,7 @@ redis有五种常用数据类型：string, hash, list, set, sorted_set
 hash存储结构的优化：
 
 + 如果field数量较少，存储结构优化为类数组结构
-+ 如果field数量较多，存储结构有华为HashMap结构
++ 如果field数量较多，存储结构优化为HashMap结构
 
 **操作**
 

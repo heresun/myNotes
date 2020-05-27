@@ -123,7 +123,7 @@ https://www.cnblogs.com/liujia1990/p/9024884.html
 
    + singleton/true: 单例模式，默认
 
-   + prototype/false: 原型模式
+   + prototype/false: 原型模式，每次注入或者通过Spring应用上下文获取的时候，都会创建一个新的bean实例，适用于易变的对象，这些对象需要保存一些状态，如果公用，其他用户会污染该对象。
 
    + request: 针对每一个http请求，创建一个新bean，同时该bean仅在当前HTTP request内有效
 
@@ -195,7 +195,7 @@ bean 的属性`name`也可以用于起别名，可以取多个别名，所以ali
 
 可以完全不用xml文件做配置，只用java！
 
-JavaConfig是Spring的一个子项目，在Spring4之后，它称为了Spring的核心功能，并且为官方推荐来配置Spring。
+JavaConfig是Spring的一个子项目，在Spring4之后，它成为了Spring的核心功能，并且为官方推荐来配置Spring。
 
 ```java
 import com.sundehui.domain.User;
@@ -360,7 +360,7 @@ https://blog.csdn.net/qq_36381855/article/details/79752689
 
 ## 3.4 IOC创建对象的时机
 
-配置文件被加载后就创建了对象，从容器中取出的对象都是同一个，即应用了单例模式。
+==配置文件被加载后就创建了对象，从容器中取出的对象都是同一个，即应用了单例模式。==
 
 
 
@@ -404,7 +404,7 @@ https://blog.csdn.net/qq_36381855/article/details/79752689
 
    + **@Autowired**：一般放在域或方法上
 
-     它的作用是，自动把**在IOC容器中的对象**给当前类的域装配，要求当前类的域名和IOC的对象id一样，是byName的，它要求域不为空，如果可以为空，可将其required属性设置为false
+     它的作用是，自动把**在IOC容器中的对象**给当前类的域装配，优先使用byTypoe，如果有多个相同类型的域则改为byName，它要求域不为空，如果可以为空，可将其required属性设置为false
 
    + **@Qualifier(value="beanId")**：和@Autowired组合使用，显示指出为注解的域装配那个对象
 
@@ -536,7 +536,7 @@ https://blog.csdn.net/qq_36381855/article/details/79752689
        }
        //获取代理类，代理类实现了真实角色实现的接口
        public T getProxyObj(){
-           return (T)Proxy.newProxyInstance(this.getClass(). getClassLoader(),
+           return (T)Proxy.newProxyInstance(this.getClass().getClassLoader(),
                                             target.getClass().getInterfaces(),
                                             this);
        }

@@ -28,7 +28,7 @@ linux
 >
 > + **版本库：** 工作区有个隐藏的`.git`文件夹，它就是版本库
 >
-> + **暂存区：** git  的版本库里存了很多东西，最重要的是成为**stage**（或**index**）的暂存区，还有git自动创建的第一个分支**master**，以及指向`master`的指针`HEAD`
+> + **暂存区：** git  的版本库里存了很多东西，最重要的是称为**stage**（或**index**）的暂存区，还有git自动创建的第一个分支**master**，以及指向`master`的指针`HEAD`
 >
 >   ![git-repo](https://www.liaoxuefeng.com/files/attachments/919020037470528/0)
 >

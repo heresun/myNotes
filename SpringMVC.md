@@ -27,10 +27,6 @@ SpringMVC是围绕DispatcherServlet设计的, 它的作用是将请求分发到�
 
 ## 1.3 SpringMVC的请求传递过程 
 
-![image-20200304153652122](C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200304153652122.png)
-
-
-
 在下图中,实线部分是SpringMVC已经实现的, 用户只需实现虚线部分即可
 
 <img src="C:\Users\14402\AppData\Roaming\Typora\typora-user-images\image-20200304201056252.png" alt="image-20200304201056252" style="zoom:80%;" />
@@ -39,14 +35,14 @@ SpringMVC是围绕DispatcherServlet设计的, 它的作用是将请求分发到�
 
 假设浏览器发出一个请求,url为`http://localhost:8080/springweb/hello`
 
-1. `DispatcherServlet`为一个前置控制器,是SpringMVC的控制中心, 用于接收并拦截请求
+1. `DispatcherServlet`为一个前端控制器,是SpringMVC的控制中心, 用于接收并拦截请求
 2. `HandlerMapping`为处理器映射, `DispatcherServlet`调用它, 它根据请求的url查找Handler
 3. `HandlerExecution`为具体的Handler, 它的作用是根据url查找控制器, 如上的url被查找控制器为: hello
-4. `HandlerExecution`将解析偶的信息传递给`DispatcherServlet`, 如解析控制器映射等
+4. `HandlerExecution`将解析的信息传递给`DispatcherServlet`, 如解析控制器映射等
 5. `HandlerAdapter`为处理器适配器, 它按照一定的规则执行Handler
 6. Handler让具体的`Controller`执行
 7. `Controller`将执行的结果反馈给`HandlerAdapter`, 如ModleAndView
-8. `HandlerAdapter`将试图逻辑名或者模型传递给`DispatcherServlet`
+8. `HandlerAdapter`将视图逻辑名或者模型传递给`DispatcherServlet`
 9. `DispatcherServlet`调用视图解析器`ViewResolver`来解析`HandlerAdapter`传回的视图名
 10. `ViewResolver`将解析的逻辑视图名传给`DispatcherServlet`
 11. `DispatcherServlet`根据视图解析器传回的结果调用具体的视图

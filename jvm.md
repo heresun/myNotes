@@ -254,13 +254,13 @@ class TestClass{
 
   > 它的父加载器为根加载器，它从系统属性<font style="color:red">`java.ext.dirs`</font>指向的目录中加载类库，或从jdk的安装目录的`jre/lib/ext`目录（扩展目录）下加载类库，如果把用户创建的jar文件放在这个目录下，也会被其加载。
   >
-  > 扩展类加载器时纯java类，他是<font style="color:red">`java.lang.ClassLoader`</font>的子类。
+  > 扩展类加载器是纯java类，他是<font style="color:red">`java.lang.ClassLoader`</font>的子类。
 
 + 系统（应用）类加载器（System）
 
   > 也成为应用加载器，它的父加载器为扩展类加载器，它从环境变量`classpath`或者系统属性`java.class.path`所指定的目录中加载类库。
   >
-  > 它时用户自定义加载器的默认父加载器，是纯java类，是`java.lang.ClassLoader`的子类。
+  > 它是用户自定义加载器的默认父加载器，是纯java类，是`java.lang.ClassLoader`的子类。
 
 ### 用户自定义的类加载器
 
